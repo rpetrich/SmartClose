@@ -1,0 +1,13 @@
+Package: com.rpetrich.smartclose
+Name: SmartClose
+Depends: firmware (>= 7.0), mobilesubstrate, libactivator (>= 1.8.4~beta7)
+Version: 0.1
+Architecture: iphoneos-arm
+Description: Close background apps, the smart way via Activator
+Maintainer: thebigboss.org <http://thebigboss.org>
+Author: Ryan Petrich <rpetrich+smartclose@gmail.com>
+Section: Tweaks
+Tag: purpose::extension
+Homepage: http://rpetri.ch/cydia/smartclose/
+Depiction: http://rpetri.ch/cydia/smartclose/
+dev: rpetrich
