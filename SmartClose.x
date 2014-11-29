@@ -88,11 +88,17 @@ skip:
 	event.handled = YES;
 	dispatch_async(dispatch_get_main_queue(), ^{
 		SBAppSwitcherModel *model = (SBAppSwitcherModel *)[%c(SBAppSwitcherModel) sharedInstance];
-		NSArray *identifiers = model.identifiers;
+		NSArray *identifiers = [model respondsToSelector:@selector(identifiers)] ? model.identifiers : model.snapshot;
 		if ([identifiers count]) {
 			id temp = [[NSDictionary dictionaryWithContentsOfFile:kSettingsFilePath] objectForKey:@"SCClearSwitcher"];
 			if (!temp || [temp boolValue]) {
-				[model appsRemoved:[NSArray arrayWithArray:identifiers] added:nil];
+				if ([model respondsToSelector:@selector(appsRemoved:added:)]) {
+					[model appsRemoved:[NSArray arrayWithArray:identifiers] added:nil];
+				} else {
+					for (NSString *displayIdentifier in identifiers) {
+						[model remove:displayIdentifier];
+					}
+				}
 			}
 		}
 		SBUIController *uic = (SBUIController *)[%c(SBUIController) sharedInstance];

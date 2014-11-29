@@ -18,6 +18,10 @@
 - (id)init;
 @end
 
+@interface SBAppSwitcherModel (iOS8)
+@property (nonatomic, readonly) NSArray *snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary;
+@end
+
 @interface SBUIController : NSObject
 + (SBUIController *)sharedInstance;
 - (void)dismissSwitcherAnimated:(BOOL)animated;
