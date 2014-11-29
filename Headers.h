@@ -262,3 +262,18 @@ struct BKProcessTimes {
 
 @end
 
+@class FBProcessState;
+
+@interface FBProcess : NSObject
+@property (readonly, copy, nonatomic) FBProcessState *state;
+@property (readonly, copy, nonatomic) NSString *jobLabel;
+@property (readonly, copy, nonatomic) NSString *bundleIdentifier;
+@property (readonly, copy, nonatomic) NSString *name;
+@end
+
+@interface FBApplicationProcess : FBProcess
+@property (nonatomic, getter=isConnectedToExternalAccessory) BOOL connectedToExternalAccessory;
+@property (nonatomic, getter=isNowPlayingWithAudio) BOOL nowPlayingWithAudio;
+@property (nonatomic, getter=isRecordingAudio) BOOL recordingAudio;
+@end
+

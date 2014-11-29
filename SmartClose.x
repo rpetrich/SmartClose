@@ -103,7 +103,13 @@ skip:
 		}
 		SBUIController *uic = (SBUIController *)[%c(SBUIController) sharedInstance];
 		[uic dismissSwitcherAnimated:YES];
-		notify_post("com.rpetrich.smartclose");
+		if (kCFCoreFoundationVersionNumber < 1000) {
+			notify_post("com.rpetrich.smartclose");
+		} else {
+			for (FBApplicationProcess *process in [[%c(FBProcessManager) sharedInstance] allApplicationProcesses]) {
+				// TODO: Fill this in
+			}
+		}
 	});
 }
 
