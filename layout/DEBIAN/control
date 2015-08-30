@@ -1,6 +1,6 @@
 Package: com.rpetrich.smartclose
 Name: SmartClose
-Depends: firmware (>= 6.0), mobilesubstrate (>= 0.9.5001), libactivator (>= 1.8.4~beta7), preferenceloader (>= 2.2.2), applist (>= 1.5.7)
+Depends: firmware (>= 6.0), mobilesubstrate (>= 0.9.5001), libactivator (>= 1.9.5), preferenceloader (>= 2.2.2), applist (>= 1.5.9)
 Version: 0.5
 Architecture: iphoneos-arm
 Description: Close background apps, the smart way via Activator
