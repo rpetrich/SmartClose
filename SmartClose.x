@@ -5,8 +5,6 @@
 
 #import "Headers.h"
 
-#define kSettingsFilePath @"/var/mobile/Library/Preferences/com.rpetrich.smartclose.plist"
-
 static NSInteger mustTerminateImmediately;
 
 %hook BKProcessAssertion
@@ -31,7 +29,7 @@ __attribute__((visibility("hidden")))
 static void SmartCloseNotificationReceived(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
 	//mustTerminateImmediately++;
-	NSDictionary *settings = [NSDictionary dictionaryWithContentsOfFile:kSettingsFilePath];
+	NSDictionary *settings = [NSDictionary dictionaryWithContentsOfFile:@"/var/mobile/Library/Preferences/com.rpetrich.smartclose.plist"];
 	for (BKProcess *process in [%c(BKProcess) _allProcesses]) {
 		NSString *eventPortName = process.eventPortName;
 		if (!eventPortName)
@@ -71,27 +69,36 @@ skip:
 	if (LASharedActivator.runningInsideSpringBoard) {
 		SmartClose *listener = [[self alloc] init];
 		[LASharedActivator registerListener:listener forName:@"com.rpetrich.smartclose"];
-	} else {
+	} else if (kCFCoreFoundationVersionNumber < 1000) {
 		CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), SmartCloseNotificationReceived, SmartCloseNotificationReceived, CFSTR("com.rpetrich.smartclose"), NULL, CFNotificationSuspensionBehaviorCoalesce);
 		%init();
 	}
-	if (![[NSFileManager defaultManager] fileExistsAtPath:kSettingsFilePath]) {
-		[@{
-			@"SCAppEnabled-com.apple.mobilemail": @NO
-		} writeToFile:kSettingsFilePath atomically:YES];
+	Boolean exists = false;
+	CFPreferencesGetAppBooleanValue(CFSTR("SCAppEnabled-com.apple.mobilemail"), CFSTR("com.rpetrich.smartclose"), &exists);
+	if (!exists) {
+		CFPreferencesSetAppValue(CFSTR("SCAppEnabled-com.apple.mobilemail"), kCFBooleanTrue, CFSTR("com.rpetrich.smartclose"));
+		CFPreferencesAppSynchronize(CFSTR("com.rpetrich.smartclose"));
 	}
 	[pool drain];
+}
+
+static FBApplicationProcess *processForApplication(SBApplication *app)
+{
+	FBApplicationProcess **_process = CHIvarRef(app, _process, FBApplicationProcess *);
+	return _process ? *_process : nil;
 }
 
 - (void)activator:(LAActivator *)activator receiveEvent:(LAEvent *)event
 {
 	event.handled = YES;
 	dispatch_async(dispatch_get_main_queue(), ^{
+		CFPreferencesAppSynchronize(CFSTR("com.rpetrich.smartclose"));
 		SBAppSwitcherModel *model = (SBAppSwitcherModel *)[%c(SBAppSwitcherModel) sharedInstance];
 		NSArray *identifiers = [model respondsToSelector:@selector(identifiers)] ? model.identifiers : model.snapshot;
 		if ([identifiers count]) {
-			id temp = [[NSDictionary dictionaryWithContentsOfFile:kSettingsFilePath] objectForKey:@"SCClearSwitcher"];
-			if (!temp || [temp boolValue]) {
+			Boolean exists = false;
+			Boolean clearSwitcher = CFPreferencesGetAppBooleanValue(CFSTR("SCClearSwitcher"), CFSTR("com.rpetrich.smartclose"), &exists);
+			if (!exists || clearSwitcher) {
 				if ([model respondsToSelector:@selector(appsRemoved:added:)]) {
 					[model appsRemoved:[NSArray arrayWithArray:identifiers] added:nil];
 				} else {
@@ -103,11 +110,17 @@ skip:
 		}
 		SBUIController *uic = (SBUIController *)[%c(SBUIController) sharedInstance];
 		[uic dismissSwitcherAnimated:YES];
+		FBApplicationProcess *currentProcess = processForApplication(UIApp._accessibilityFrontMostApplication);
 		if (kCFCoreFoundationVersionNumber < 1000) {
 			notify_post("com.rpetrich.smartclose");
 		} else {
-			for (FBApplicationProcess *process in [[%c(FBProcessManager) sharedInstance] allApplicationProcesses]) {
-				// TODO: Fill this in
+			for (FBApplicationProcess *process in [(FBProcessManager *)[%c(FBProcessManager) sharedInstance] allApplicationProcesses]) {
+				if (!process.nowPlayingWithAudio && !process.recordingAudio && (process != currentProcess)) {
+					BKSProcess **_bksProcess = CHIvarRef(process, _bksProcess, BKSProcess *);
+					if (_bksProcess) {
+						[process processWillExpire:*_bksProcess];
+					}
+				}
 			}
 		}
 	});

@@ -1,5 +1,7 @@
 #import <Foundation/Foundation.h>
 
+extern UIApplication *UIApp;
+
 @interface SBAppSwitcherModel : NSObject {
     NSMutableArray *_recentDisplayIdentifiers;
     NSTimer *_saveTimer;
@@ -26,6 +28,14 @@
 + (SBUIController *)sharedInstance;
 - (void)dismissSwitcherAnimated:(BOOL)animated;
 @end
+
+@interface SBApplication : NSObject
+@end
+
+@interface UIApplication (SpringBoard)
+- (SBApplication *)_accessibilityFrontMostApplication;
+@end
+
 
 struct BKProcessTimes {
     NSTimeInterval execTime;
@@ -262,6 +272,8 @@ struct BKProcessTimes {
 
 @end
 
+@class BKSProcess;
+
 @class FBProcessState;
 
 @interface FBProcess : NSObject
@@ -275,5 +287,10 @@ struct BKProcessTimes {
 @property (nonatomic, getter=isConnectedToExternalAccessory) BOOL connectedToExternalAccessory;
 @property (nonatomic, getter=isNowPlayingWithAudio) BOOL nowPlayingWithAudio;
 @property (nonatomic, getter=isRecordingAudio) BOOL recordingAudio;
+- (void)processWillExpire:(BKSProcess *)process;
 @end
 
+@interface FBProcessManager : NSObject
++ (FBProcessManager *)sharedInstance;
+- (NSArray *)allApplicationProcesses;
+@end
